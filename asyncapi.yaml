@@ -1,0 +1,197 @@
+asyncapi: 3.0.0
+info:
+  title: Order Service API
+  version: 1.0.0
+  description: |
+    # Сервис заказов
+    
+    Этот сервис отвечает за обработку заказов в нашей системе.
+    
+    ## Основные операции
+    * Создание заказа
+    * Обновление статуса
+    * Отправка уведомлений
+    
+    ## Как использовать
+    1. Подпишитесь на топик `orders/created` для получения новых заказов
+    2. Отправляйте обновления в `orders/status`
+    3. Следите за уведомлениями в `orders/notifications`
+
+servers:
+  production:
+    host: kafka.example.com:9092
+    protocol: kafka
+    description: Production Kafka Broker
+  development:
+    host: localhost:9092
+    protocol: kafka
+    description: Local Kafka Broker
+
+channels:
+  ordersCreated:
+    address: orders/created
+    messages:
+      orderCreated:
+        $ref: '#/components/messages/OrderCreated'
+    description: |
+      # Создание нового заказа
+      
+      Этот топик используется для публикации информации о новых заказах.
+      
+      ## Важно
+      * Все суммы указываются в копейках
+      * Все даты в формате ISO 8601
+      * ID заказа должен быть уникальным
+
+  ordersStatus:
+    address: orders/status
+    messages:
+      statusChanged:
+        $ref: '#/components/messages/OrderStatusChanged'
+    description: |
+      # Обновление статуса заказа
+      
+      Используется для отслеживания жизненного цикла заказа
+
+operations:
+  sendOrder:
+    action: send
+    channel:
+      $ref: '#/channels/ordersCreated'
+    messages:
+      - $ref: '#/channels/ordersCreated/messages/orderCreated'
+    summary: Отправка нового заказа
+    
+  sendStatus:
+    action: send
+    channel:
+      $ref: '#/channels/ordersStatus'
+    messages:
+      - $ref: '#/channels/ordersStatus/messages/statusChanged'
+    summary: Отправка обновления статуса
+
+  receiveOrders:
+    action: receive
+    channel:
+      $ref: '#/channels/ordersCreated'
+    messages:
+      - $ref: '#/channels/ordersCreated/messages/orderCreated'
+    summary: Получение новых заказов
+
+  receiveStatusUpdates:
+    action: receive
+    channel:
+      $ref: '#/channels/ordersStatus'
+    messages:
+      - $ref: '#/channels/ordersStatus/messages/statusChanged'
+    summary: Получение обновлений статуса
+    
+components:
+  messages:
+    OrderCreated:
+      name: OrderCreated
+      title: Новый заказ
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Order'
+      examples:
+        - payload:
+            order_id: "12345"
+            customer_id: "user789"
+            items:
+              - product_id: "prod123"
+                quantity: 2
+                price: 150000
+            total_amount: 300000
+            created_at: "2024-02-20T15:30:00Z"
+            status: "NEW"
+
+    OrderStatusChanged:
+      name: OrderStatusChanged
+      title: Изменение статуса заказа
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/OrderStatus'
+
+  schemas:
+    Order:
+      type: object
+      description: |
+        # Схема заказа
+        
+        Основная сущность, описывающая заказ в системе
+      properties:
+        order_id:
+          type: string
+          description: Уникальный идентификатор заказа
+          examples: ["12345"]
+        customer_id:
+          type: string
+          description: ID клиента
+          examples: ["user789"]
+        items:
+          type: array
+          description: Список товаров в заказе
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        total_amount:
+          type: integer
+          description: Общая сумма заказа в копейках
+          examples: [300000]
+        created_at:
+          type: string
+          format: date-time
+          description: Дата и время создания заказа
+        status:
+          type: string
+          enum: [NEW, PROCESSING, SHIPPED, DELIVERED, CANCELLED]
+          description: Текущий статус заказа
+      required:
+        - order_id
+        - customer_id
+        - items
+        - total_amount
+        - created_at
+        - status
+
+    OrderItem:
+      type: object
+      description: Товар в заказе
+      properties:
+        product_id:
+          type: string
+          description: ID товара
+        quantity:
+          type: integer
+          minimum: 1
+          description: Количество
+        price:
+          type: integer
+          description: Цена за единицу в копейках
+      required:
+        - product_id
+        - quantity
+        - price
+
+    OrderStatus:
+      type: object
+      description: Обновление статуса заказа
+      properties:
+        order_id:
+          type: string
+          description: ID заказа
+        status:
+          type: string
+          enum: [NEW, PROCESSING, SHIPPED, DELIVERED, CANCELLED]
+          description: Новый статус
+        updated_at:
+          type: string
+          format: date-time
+          description: Время обновления статуса
+        comment:
+          type: string
+          description: Комментарий к изменению статуса
+      required:
+        - order_id
+        - status
+        - updated_at

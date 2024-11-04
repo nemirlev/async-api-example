@@ -1,0 +1,134 @@
+name: AsyncAPI Docs
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'asyncapi.yaml'
+      - '.github/workflows/asyncapi.yml'
+  pull_request:
+    paths:
+      - 'asyncapi.yaml'
+
+jobs:
+  validate-and-generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Получаем всю историю для сравнения
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install AsyncAPI Tools
+        run: |
+          npm install -g @asyncapi/cli
+          npm install -g @asyncapi/parser
+          npm install -g @asyncapi/generator
+
+      - name: Validate AsyncAPI Schema
+        run: |
+          asyncapi validate asyncapi.yaml || {
+            echo "❌ AsyncAPI validation failed"
+            exit 1
+          }
+          echo "✅ AsyncAPI schema is valid"
+
+      - name: Check Breaking Changes
+        if: github.event_name == 'pull_request'
+        run: |
+          # Получаем текущую и предыдущую версии файла
+          git show ${{ github.event.pull_request.base.sha }}:asyncapi.yaml > old.yaml || touch old.yaml
+          
+          # Проверяем наличие файла и его размер
+          if [ -s old.yaml ]; then
+            # Сравниваем версии в файлах
+            OLD_VERSION=$(grep 'version:' old.yaml | head -n1 | awk '{print $2}')
+            NEW_VERSION=$(grep 'version:' asyncapi.yaml | head -n1 | awk '{print $2}')
+            
+            echo "Old version: $OLD_VERSION"
+            echo "New version: $NEW_VERSION"
+            
+            # Проверяем изменения в схемах
+            SCHEMA_CHANGES=$(diff -u old.yaml asyncapi.yaml | grep "^[+-]" | grep -v "version:")
+            
+            if [ ! -z "$SCHEMA_CHANGES" ]; then
+              echo "⚠️ Detected schema changes:"
+              echo "$SCHEMA_CHANGES"
+              
+              if [ "$OLD_VERSION" = "$NEW_VERSION" ]; then
+                echo "❌ Schema changes detected but version not updated"
+                exit 1
+              fi
+            fi
+          else
+            echo "👉 First version of AsyncAPI schema"
+          fi
+
+      - name: Prepare documentation directory
+        run: |
+          rm -rf docs
+          mkdir -p docs/html docs/markdown
+
+      - name: Generate HTML Documentation
+        run: |
+          ag asyncapi.yaml @asyncapi/html-template -o docs/html --force-write
+          
+          # Добавляем кастомные стили если есть
+          if [ -f custom.css ]; then
+            cat custom.css >> docs/css/styles.css
+          fi
+
+      - name: Create Documentation Archive
+        run: |
+          zip -r documentation.zip docs/
+
+      - name: Upload Documentation Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: asyncapi-docs
+          path: documentation.zip
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/html
+          commit_message: 'docs: update AsyncAPI documentation'
+
+      - name: Setup Git
+        if: github.ref == 'refs/heads/main' && success()
+        run: |
+          git config --global user.name "nemirlev"
+          git config --global user.email "levnemir@yandex.ru"
+
+      - name: Create Version Tag
+        if: github.ref == 'refs/heads/main' && success()
+        run: |
+          VERSION=$(grep 'version:' asyncapi.yaml | head -n1 | awk '{print $2}')
+          if [ ! -z "$VERSION" ]; then
+            if ! git rev-parse "v$VERSION" >/dev/null 2>&1; then
+              git tag -a "v$VERSION" -m "Version $VERSION"
+              git push origin "v$VERSION"
+              echo "✅ Created and pushed tag v$VERSION"
+            else
+              echo "👉 Tag v$VERSION already exists"
+            fi
+          fi
+
+  notify:
+    needs: validate-and-generate
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check Status
+        run: |
+          if [ ${{ needs.validate-and-generate.result }} == 'success' ]; then
+            echo "✅ AsyncAPI documentation successfully updated"
+          else
+            echo "❌ AsyncAPI documentation update failed"
+          fi

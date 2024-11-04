@@ -1,0 +1,29 @@
+{
+    "templateConfig": {
+      "supportEmail": "levnemir@yandex.ru",
+      "baseHref": "/asyncapi-demo/",
+      "sidebarOrganization": "byTags",
+      "generateExamples": true,
+      "includeSchemas": true,
+      "includeMessages": true
+    },
+    "output": {
+      "fromTemplate": true,
+      "templateParams": {
+        "header": true,
+        "footer": true,
+        "navigation": true,
+        "search": true,
+        "theme": {
+          "primary": "#1976D2",
+          "secondary": "#424242",
+          "backgroundColor": "#FFFFFF"
+        }
+      }
+    },
+    "generate": {
+      "markdown": true,
+      "html": true,
+      "pythonClient": true
+    }
+  }

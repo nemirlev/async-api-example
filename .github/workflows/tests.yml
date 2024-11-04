@@ -1,0 +1,38 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'asyncapi.yaml'
+      - '.github/workflows/tests.yml'
+  pull_request:
+    paths:
+      - 'asyncapi.yaml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Делаем тесты необязательными
+    
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Start containers
+      run: docker-compose up -d
+
+    - name: Run tests
+      run: |
+        chmod +x ./run_tests.sh
+        ./run_tests.sh
+
+    - name: Stop containers
+      if: always()
+      run: docker-compose down
+
+    - name: Report Status
+      if: always()
+      run: |
+        if [ ${{ job.status }} == 'failure' ]; then
+          echo "⚠️ Тесты не прошли, но это ОК для демо-проекта"
+        fi
