@@ -6,21 +6,21 @@ from aiokafka.errors import KafkaConnectionError
 
 class OrderService:
     def __init__(self):
-        # Получаем адрес брокера из переменной окружения
+        # Get the broker address from the environment variable
         self.bootstrap_servers = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092')
-        # Используем подчеркивание вместо слэша
+
         self.order_topic = 'orders'
         self.status_topic = 'order_status'
         
         print(f"Connecting to Kafka at {self.bootstrap_servers}")
         
-        # Инициализация producer
+        # Initialize producer
         self.producer = AIOKafkaProducer(
             bootstrap_servers=self.bootstrap_servers,
             value_serializer=lambda v: json.dumps(v).encode('utf-8')
         )
         
-        # Инициализация consumer
+        # Initialize consumer
         self.consumer = AIOKafkaConsumer(
             self.status_topic,
             bootstrap_servers=self.bootstrap_servers,
@@ -31,7 +31,7 @@ class OrderService:
 
     async def connect(self):
         try:
-            # Запуск producer и consumer
+            # Starting producer and consumer
             await self.producer.start()
             await self.consumer.start()
             print("Successfully connected to Kafka")
@@ -40,7 +40,7 @@ class OrderService:
             raise
 
     async def close(self):
-        # Корректное закрытие соединений
+        # Properly closing connections
         try:
             await self.producer.stop()
             await self.consumer.stop()
@@ -70,14 +70,14 @@ async def main():
     try:
         await service.connect()
         
-        # Создаем тестовый заказ
+        # Create a test order
         test_order = {
             "order_id": "123",
             "items": ["item1", "item2"],
             "customer": "test_customer"
         }
         
-        # Отправляем заказ и начинаем слушать обновления
+        # Send the order and start listening for updates
         await asyncio.gather(
             service.send_order(test_order),
             service.process_status_updates()
