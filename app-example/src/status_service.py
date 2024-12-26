@@ -12,13 +12,13 @@ class StatusService:
         
         print(f"Connecting to Kafka at {self.bootstrap_servers}")
         
-        # Инициализация producer для отправки статусов
+        # Initialize producer for sending statuses
         self.producer = AIOKafkaProducer(
             bootstrap_servers=self.bootstrap_servers,
             value_serializer=lambda v: json.dumps(v).encode('utf-8')
         )
         
-        # Инициализация consumer для получения заказов
+        # Initialize consumer for receiving orders
         self.consumer = AIOKafkaConsumer(
             self.order_topic,
             bootstrap_servers=self.bootstrap_servers,
@@ -62,16 +62,16 @@ class StatusService:
                 order_data = msg.value
                 print(f"Received order: {order_data}")
                 
-                # Имитация обработки заказа
+                # Simulating order processing
                 order_id = order_data.get("order_id")
-                await asyncio.sleep(2)  # Имитация какой-то работы
-                
-                # Отправляем обновление статуса
+                await asyncio.sleep(2)  # Simulating some work
+
+                # Sending status update
                 await self.send_status(order_id, "PROCESSING")
-                
-                await asyncio.sleep(3)  # Ещё немного работы
-                
-                # Отправляем финальный статус
+
+                await asyncio.sleep(3)  # More work
+
+                # Sending final status
                 await self.send_status(order_id, "COMPLETED")
                 
         except Exception as e:
