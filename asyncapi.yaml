@@ -3,19 +3,19 @@ info:
   title: Order Service API
   version: 1.0.0
   description: |
-    # Сервис заказов
+    # Order Service
     
-    Этот сервис отвечает за обработку заказов в нашей системе.
+    This service is responsible for processing orders in our system.
     
-    ## Основные операции
-    * Создание заказа
-    * Обновление статуса
-    * Отправка уведомлений
+    ## Main operations
+    * Creating an order
+    * Updating status
+    * Sending notifications
     
-    ## Как использовать
-    1. Подпишитесь на топик `orders/created` для получения новых заказов
-    2. Отправляйте обновления в `orders/status`
-    3. Следите за уведомлениями в `orders/notifications`
+    ## How to use
+    1. Subscribe to the `orders/created` topic to receive new orders
+    2. Send updates to `orders/status`
+    3. Monitor notifications in `orders/notifications`
 
 servers:
   production:
@@ -34,14 +34,14 @@ channels:
       orderCreated:
         $ref: '#/components/messages/OrderCreated'
     description: |
-      # Создание нового заказа
+      # Creating a new order
       
-      Этот топик используется для публикации информации о новых заказах.
+      This topic is used to publish information about new orders.
       
-      ## Важно
-      * Все суммы указываются в копейках
-      * Все даты в формате ISO 8601
-      * ID заказа должен быть уникальным
+      ## Important
+      * All amounts are specified in kopecks
+      * All dates are in ISO 8601 format
+      * Order ID must be unique
 
   ordersStatus:
     address: orders/status
@@ -49,9 +49,9 @@ channels:
       statusChanged:
         $ref: '#/components/messages/OrderStatusChanged'
     description: |
-      # Обновление статуса заказа
+      # Updating order status
       
-      Используется для отслеживания жизненного цикла заказа
+      Used to track the lifecycle of an order
 
 operations:
   sendOrder:
@@ -60,7 +60,7 @@ operations:
       $ref: '#/channels/ordersCreated'
     messages:
       - $ref: '#/channels/ordersCreated/messages/orderCreated'
-    summary: Отправка нового заказа
+    summary: Sending a new order
     
   sendStatus:
     action: send
@@ -68,7 +68,7 @@ operations:
       $ref: '#/channels/ordersStatus'
     messages:
       - $ref: '#/channels/ordersStatus/messages/statusChanged'
-    summary: Отправка обновления статуса
+    summary: Sending a status update
 
   receiveOrders:
     action: receive
@@ -76,7 +76,7 @@ operations:
       $ref: '#/channels/ordersCreated'
     messages:
       - $ref: '#/channels/ordersCreated/messages/orderCreated'
-    summary: Получение новых заказов
+    summary: Receiving new orders
 
   receiveStatusUpdates:
     action: receive
@@ -84,13 +84,13 @@ operations:
       $ref: '#/channels/ordersStatus'
     messages:
       - $ref: '#/channels/ordersStatus/messages/statusChanged'
-    summary: Получение обновлений статуса
+    summary: Receiving status updates
     
 components:
   messages:
     OrderCreated:
       name: OrderCreated
-      title: Новый заказ
+      title: New Order
       contentType: application/json
       payload:
         $ref: '#/components/schemas/Order'
@@ -108,7 +108,7 @@ components:
 
     OrderStatusChanged:
       name: OrderStatusChanged
-      title: Изменение статуса заказа
+      title: Order Status Changed
       contentType: application/json
       payload:
         $ref: '#/components/schemas/OrderStatus'
@@ -117,35 +117,35 @@ components:
     Order:
       type: object
       description: |
-        # Схема заказа
+        # Order Schema
         
-        Основная сущность, описывающая заказ в системе
+        The main entity describing an order in the system
       properties:
         order_id:
           type: string
-          description: Уникальный идентификатор заказа
+          description: Unique order identifier
           examples: ["12345"]
         customer_id:
           type: string
-          description: ID клиента
+          description: Customer ID
           examples: ["user789"]
         items:
           type: array
-          description: Список товаров в заказе
+          description: List of items in the order
           items:
             $ref: '#/components/schemas/OrderItem'
         total_amount:
           type: integer
-          description: Общая сумма заказа в копейках
+          description: Total order amount in kopecks
           examples: [300000]
         created_at:
           type: string
           format: date-time
-          description: Дата и время создания заказа
+          description: Order creation date and time
         status:
           type: string
           enum: [NEW, PROCESSING, SHIPPED, DELIVERED, CANCELLED]
-          description: Текущий статус заказа
+          description: Current order status
       required:
         - order_id
         - customer_id
@@ -156,18 +156,18 @@ components:
 
     OrderItem:
       type: object
-      description: Товар в заказе
+      description: Order item
       properties:
         product_id:
           type: string
-          description: ID товара
+          description: Product ID
         quantity:
           type: integer
           minimum: 1
-          description: Количество
+          description: Quantity
         price:
           type: integer
-          description: Цена за единицу в копейках
+          description: Price per unit in kopecks
       required:
         - product_id
         - quantity
@@ -175,22 +175,22 @@ components:
 
     OrderStatus:
       type: object
-      description: Обновление статуса заказа
+      description: Order status update
       properties:
         order_id:
           type: string
-          description: ID заказа
+          description: Order ID
         status:
           type: string
           enum: [NEW, PROCESSING, SHIPPED, DELIVERED, CANCELLED]
-          description: Новый статус
+          description: New status
         updated_at:
           type: string
           format: date-time
-          description: Время обновления статуса
+          description: Status update time
         comment:
           type: string
-          description: Комментарий к изменению статуса
+          description: Comment on status change
       required:
         - order_id
         - status
