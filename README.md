@@ -20,7 +20,7 @@ A demo project to get acquainted with AsyncAPI using the example of an order ser
 
 ## ✏️ How to make changes?
 
-### Через веб-интерфейс GitHub:
+### Through the GitHub web interface:
 
 1. Open the `asyncapi.yaml` file
 2. Click the edit button (pencil icon)
