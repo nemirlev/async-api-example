@@ -9,7 +9,7 @@ import uvicorn
 
 app = FastAPI(title="Order API Service")
 
-# Модели данных
+# Data models
 class OrderItem(BaseModel):
     product_id: str
     quantity: int
@@ -25,14 +25,14 @@ class OrderStatus(BaseModel):
     order_id: str
     status: str
 
-# Глобальные переменные для Kafka
+# Global variables for Kafka
 producer = None
 consumer = None
 ORDER_TOPIC = 'orders'
 STATUS_TOPIC = 'order_status'
 KAFKA_BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092')
 
-# Хранилище для отслеживания статусов заказов (в реальном приложении использовали бы базу данных)
+# Storage for tracking order statuses (a real application would use a database)
 order_statuses = {}
 
 @app.on_event("startup")
@@ -40,14 +40,14 @@ async def startup_event():
     global producer, consumer
     
     print(f"Connecting to Kafka at {KAFKA_BOOTSTRAP_SERVERS}")
-    
-    # Инициализация producer
+
+    # Initialize producer
     producer = AIOKafkaProducer(
         bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
         value_serializer=lambda v: json.dumps(v).encode('utf-8')
     )
     
-    # Инициализация consumer
+    # Initialize consumer
     consumer = AIOKafkaConsumer(
         STATUS_TOPIC,
         bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
@@ -59,7 +59,7 @@ async def startup_event():
     await producer.start()
     await consumer.start()
     
-    # Запуск фонового процесса для получения обновлений статусов
+    # Start background process to receive status updates
     asyncio.create_task(consume_status_updates())
 
 @app.on_event("shutdown")
@@ -82,10 +82,10 @@ async def consume_status_updates():
 @app.post("/orders/", response_model=OrderStatus)
 async def create_order(order: Order):
     try:
-        # Генерируем ID заказа (в реальном приложении использовали бы UUID)
+        # Generate order ID (a real application would use UUID)
         order_id = str(len(order_statuses) + 1)
         
-        # Подготавливаем данные для отправки
+        # Prepare data for sending
         order_data = {
             "order_id": order_id,
             "customer_id": order.customer_id,
@@ -94,10 +94,10 @@ async def create_order(order: Order):
             "status": "NEW"
         }
         
-        # Отправляем заказ в Kafka
+        # Send order to Kafka
         await producer.send(ORDER_TOPIC, order_data)
         
-        # Сохраняем начальный статус
+        # Save initial status
         order_statuses[order_id] = "NEW"
         
         return {"order_id": order_id, "status": "NEW"}
