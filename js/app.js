@@ -4,7 +4,7 @@
   "info": {
     "title": "Order Service API",
     "version": "1.0.0",
-    "description": "# Сервис заказов\n\nЭтот сервис отвечает за обработку заказов в нашей системе.\n\n## Основные операции\n* Создание заказа\n* Обновление статуса\n* Отправка уведомлений\n\n## Как использовать\n1. Подпишитесь на топик `orders/created` для получения новых заказов\n2. Отправляйте обновления в `orders/status`\n3. Следите за уведомлениями в `orders/notifications`\n"
+    "description": "# Order Service\n\nThis service is responsible for processing orders in our system.\n\n## Main operations\n* Creating an order\n* Updating status\n* Sending notifications\n\n## How to use\n1. Subscribe to the `orders/created` topic to receive new orders\n2. Send updates to `orders/status`\n3. Monitor notifications in `orders/notifications`\n"
   },
   "servers": {
     "production": {
@@ -24,15 +24,15 @@
       "messages": {
         "orderCreated": {
           "name": "OrderCreated",
-          "title": "Новый заказ",
+          "title": "New Order",
           "contentType": "application/json",
           "payload": {
             "type": "object",
-            "description": "# Схема заказа\n\nОсновная сущность, описывающая заказ в системе\n",
+            "description": "# Order Schema\n\nThe main entity describing an order in the system\n",
             "properties": {
               "order_id": {
                 "type": "string",
-                "description": "Уникальный идентификатор заказа",
+                "description": "Unique order identifier",
                 "examples": [
                   "12345"
                 ],
@@ -40,7 +40,7 @@
               },
               "customer_id": {
                 "type": "string",
-                "description": "ID клиента",
+                "description": "Customer ID",
                 "examples": [
                   "user789"
                 ],
@@ -48,25 +48,25 @@
               },
               "items": {
                 "type": "array",
-                "description": "Список товаров в заказе",
+                "description": "List of items in the order",
                 "items": {
                   "type": "object",
-                  "description": "Товар в заказе",
+                  "description": "Order item",
                   "properties": {
                     "product_id": {
                       "type": "string",
-                      "description": "ID товара",
+                      "description": "Product ID",
                       "x-parser-schema-id": "<anonymous-schema-4>"
                     },
                     "quantity": {
                       "type": "integer",
                       "minimum": 1,
-                      "description": "Количество",
+                      "description": "Quantity",
                       "x-parser-schema-id": "<anonymous-schema-5>"
                     },
                     "price": {
                       "type": "integer",
-                      "description": "Цена за единицу в копейках",
+                      "description": "Price per unit in kopecks",
                       "x-parser-schema-id": "<anonymous-schema-6>"
                     }
                   },
@@ -81,7 +81,7 @@
               },
               "total_amount": {
                 "type": "integer",
-                "description": "Общая сумма заказа в копейках",
+                "description": "Total order amount in kopecks",
                 "examples": [
                   300000
                 ],
@@ -90,7 +90,7 @@
               "created_at": {
                 "type": "string",
                 "format": "date-time",
-                "description": "Дата и время создания заказа",
+                "description": "Order creation date and time",
                 "x-parser-schema-id": "<anonymous-schema-8>"
               },
               "status": {
@@ -102,7 +102,7 @@
                   "DELIVERED",
                   "CANCELLED"
                 ],
-                "description": "Текущий статус заказа",
+                "description": "Current order status",
                 "x-parser-schema-id": "<anonymous-schema-9>"
               }
             },
@@ -137,7 +137,7 @@
           "x-parser-unique-object-id": "orderCreated"
         }
       },
-      "description": "# Создание нового заказа\n\nЭтот топик используется для публикации информации о новых заказах.\n\n## Важно\n* Все суммы указываются в копейках\n* Все даты в формате ISO 8601\n* ID заказа должен быть уникальным\n",
+      "description": "# Creating a new order\n\nThis topic is used to publish information about new orders.\n\n## Important\n* All amounts are specified in kopecks\n* All dates are in ISO 8601 format\n* Order ID must be unique\n",
       "x-parser-unique-object-id": "ordersCreated"
     },
     "ordersStatus": {
@@ -145,15 +145,15 @@
       "messages": {
         "statusChanged": {
           "name": "OrderStatusChanged",
-          "title": "Изменение статуса заказа",
+          "title": "Order Status Changed",
           "contentType": "application/json",
           "payload": {
             "type": "object",
-            "description": "Обновление статуса заказа",
+            "description": "Order status update",
             "properties": {
               "order_id": {
                 "type": "string",
-                "description": "ID заказа",
+                "description": "Order ID",
                 "x-parser-schema-id": "<anonymous-schema-10>"
               },
               "status": {
@@ -165,18 +165,18 @@
                   "DELIVERED",
                   "CANCELLED"
                 ],
-                "description": "Новый статус",
+                "description": "New status",
                 "x-parser-schema-id": "<anonymous-schema-11>"
               },
               "updated_at": {
                 "type": "string",
                 "format": "date-time",
-                "description": "Время обновления статуса",
+                "description": "Status update time",
                 "x-parser-schema-id": "<anonymous-schema-12>"
               },
               "comment": {
                 "type": "string",
-                "description": "Комментарий к изменению статуса",
+                "description": "Comment on status change",
                 "x-parser-schema-id": "<anonymous-schema-13>"
               }
             },
@@ -190,7 +190,7 @@
           "x-parser-unique-object-id": "statusChanged"
         }
       },
-      "description": "# Обновление статуса заказа\n\nИспользуется для отслеживания жизненного цикла заказа\n",
+      "description": "# Updating order status\n\nUsed to track the lifecycle of an order\n",
       "x-parser-unique-object-id": "ordersStatus"
     }
   },
@@ -201,7 +201,7 @@
       "messages": [
         "$ref:$.channels.ordersCreated.messages.orderCreated"
       ],
-      "summary": "Отправка нового заказа",
+      "summary": "Sending a new order",
       "x-parser-unique-object-id": "sendOrder"
     },
     "sendStatus": {
@@ -210,7 +210,7 @@
       "messages": [
         "$ref:$.channels.ordersStatus.messages.statusChanged"
       ],
-      "summary": "Отправка обновления статуса",
+      "summary": "Sending a status update",
       "x-parser-unique-object-id": "sendStatus"
     },
     "receiveOrders": {
@@ -219,7 +219,7 @@
       "messages": [
         "$ref:$.channels.ordersCreated.messages.orderCreated"
       ],
-      "summary": "Получение новых заказов",
+      "summary": "Receiving new orders",
       "x-parser-unique-object-id": "receiveOrders"
     },
     "receiveStatusUpdates": {
@@ -228,7 +228,7 @@
       "messages": [
         "$ref:$.channels.ordersStatus.messages.statusChanged"
       ],
-      "summary": "Получение обновлений статуса",
+      "summary": "Receiving status updates",
       "x-parser-unique-object-id": "receiveStatusUpdates"
     }
   },
